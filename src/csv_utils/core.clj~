@@ -1,0 +1,10 @@
+(ns csv-utils.core
+  (:require
+            [clojure-csv.core :as csv]
+            [clojure.java.io :as io]))
+
+
+(defn loadCsvFile
+  [filename]
+  (let [file (slurp filename)]
+    (csv/parse-csv file)))
