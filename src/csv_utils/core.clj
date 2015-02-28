@@ -3,6 +3,10 @@
             [clojure-csv.core :as csv]
             [clojure.java.io :as io]))
 
+(defn swap
+  [v i j] 
+  (-> v (assoc i (v j)) (assoc j (v i)))) 
+
 (defn readCsvFile
   [filename]
   (let [file (slurp filename)]
@@ -60,20 +64,52 @@
      (pmap reverse (partition columnCount (apply interleave data)))
      (reverse headers))))
 
+(defn swapColumnsRecursive
+  [colList dataMap mapSoFar]
+  (if-not (empty? colList) 
+    (recur (rest colList)
+           dataMap
+           (assoc mapSoFar
+                  (first colList)
+                  (get dataMap (first colList))))
+  mapSoFar))
+
+(defn swapColumns
+  [dataMap col1 col2]
+  (let [colList (into [] (keys dataMap))]
+    (let [c1 (.indexOf colList col1)
+          c2 (.indexOf colList col2)
+          swappedColList (swap colList c1 c2)]
+      (swapColumnsRecursive (reverse swappedColList) dataMap {}))))
+
 ;; ------------- Test Data ----------------
 (def fileName "/home/arens/easycsv.csv")
 (def file (readCsvFile fileName))
+(def testMap (buildColumnMapFromFile file))
+
+(select-keys testMap ["Letters" "Numbers"])
+
+(swapColumns testMap "Letters" "Numbers")
+(println testMap)
+(def v1 (into [] (keys testMap)))
+(def l1 ["A" "B" "C" "D"])
+
+(swap l1 0 2)
+(.indexOf v1 "Letters")
+(keys testMap)
+(get testMap "Letters")
 
 (getColumnCount file)
 (getRowCountStripHeaders file)
 
-(buildColumnMapFromFile file)
+(swap (buildColumnMapFromFile file) 0 1)
 
 (columnizeData file)
 
 (reverse (partition 3 (apply interleave (columnizeData file))))
 
-(def testMap (buildColumnMapFromFile file))
+(swap testMap "Letters" "Numbers")
+(println testMap)
 
 (decolumnizeDataMap testMap (count (keys testMap)))
 
@@ -83,12 +119,4 @@
 (get testMap "CustNo")
 (getColumnHeaders file)
 
-(def seq1 '(1 2 3))
-(def seq2 '(4 5 6))
-(def seq3 '(seq1 seq2))
-
-(conj ()  (first seq1) (first seq2))
-
 (keys testMap)
-
-(interleave seq1 seq2)
